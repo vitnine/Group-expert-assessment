@@ -7,34 +7,31 @@ class ExcelShell:
             self,
             work_book,
             current_sheet: str,
-            sheet_names: List[str],
     ) -> None:
         self.work_book = work_book
-        self.sheet_names = sheet_names
+        self.sheet_names = work_book.sheetnames
         self.current_sheet = current_sheet
-        self.ws = addict.Dict(**{name: self.work_book[name] for name in sheet_names})
+        self.ws = addict.Dict(**{name: self.work_book[name] for name in self.sheet_names})
         self.start_matrix = []
         self.matrix = []
-        self.lamb = []
         self.max = []
-        self.Ki = []
-        self.Xj = []
-        self.delta_Ki = [1]
 
     def get_matrix(self):
         if not self.matrix:
-            matrix = []
+            self.matrix = []
+            self.start_matrix = []
             for i, row in enumerate(self.ws[self.current_sheet].rows):
                 if i == 0:
                     continue
-                matrix.append([])
+                self.matrix.append([])
+                self.start_matrix.append([])
                 for j in range(len(row)):
                     if j == 0:
                         continue
-                    matrix[i - 1].append(row[j].value)
-            self.matrix = matrix
-            self.start_matrix = matrix
-            return matrix
+                    self.matrix[i - 1].append(row[j].value)
+                    self.start_matrix[i - 1].append(row[j].value)
+
+        return self.matrix
 
     def get_max_in_lines(self):
         if not self.max:
@@ -53,20 +50,29 @@ class ExcelShell:
 
         return self.matrix
 
+
+class FirstLab(ExcelShell):
+    def __init__(self, work_book, current_sheet):
+        ExcelShell.__init__(self, work_book=work_book, current_sheet=current_sheet)
+        self.Ki = []
+        self.Xj = []
+        self.delta_Ki = [1]
+        self.lamb = []
+
     def find_Ki(self, t):
         self.Ki.append([])
         lines_amount = len(self.matrix)
         if t == 0:
             for i in range(lines_amount):
-                self.Ki[t].append(1/lines_amount)
+                self.Ki[t].append(1 / lines_amount)
         else:
             for i in range(lines_amount):
                 result = 0
                 for j in range(len(self.matrix[i])):
-                    result += (self.Xj[t-1][j] * self.matrix[i][j])/self.lamb[t-1]
+                    result += (self.Xj[t - 1][j] * self.matrix[i][j]) / self.lamb[t - 1]
                 self.Ki[t].append(result)
 
-            self.delta_Ki.append(abs(self.Ki[t][0] - self.Ki[t-1][0]))
+            self.delta_Ki.append(abs(self.Ki[t][0] - self.Ki[t - 1][0]))
 
         return self.Ki
 
@@ -89,13 +95,16 @@ class ExcelShell:
             self.Xj[t].append(round(result, 10))
         return self.Xj
 
-    def get_group_assessment(self, border):
-        t=0
-        while self.delta_Ki[-1] > border:
+    def get_group_assessment(self, border=0):
+        self.get_matrix()
+        self.get_max_in_lines()
+        self.reduce_lines()
+        t = 0
+        while self.delta_Ki[-1] > border or self.delta_Ki[-1] == self.delta_Ki[-2]:
             Ki = self.find_Ki(t=t)
             Xj = self.find_Xj(t=t)
             lamb = self.find_lambda(t=t)
-            t +=1
+            t += 1
 
 #     def __str__(self):
 #         start_matrix = ""
