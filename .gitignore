@@ -24,3 +24,8 @@ ENV/
 env.bak/
 venv.bak/
 
+#poetry
+poetry.lock
+
+#tests
+test.py
