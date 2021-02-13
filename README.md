@@ -10,6 +10,4 @@ How to use poetry you can check here: https://python-poetry.org/
 
 4)Run the start.py
 
-
-Soon will be added more tasks from my class lessons :)
 For more information you can write me on my E-mail: vitninevt@gmail.com
